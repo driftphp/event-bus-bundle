@@ -66,6 +66,8 @@ class EventBusExtension extends BaseExtension
         return [
             'bus.event_bus.middlewares' => $config['middlewares'],
             'bus.event_bus.distribution' => $config['distribution'],
+            'bus.event_bus.exchanges' => $config['exchanges'],
+            'bus.event_bus.routes' => $config['router'],
             'bus.event_bus.async_adapter' => $config['async_adapter'] ?? false,
         ];
     }

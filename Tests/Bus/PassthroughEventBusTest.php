@@ -37,9 +37,14 @@ class PassthroughEventBusTest extends EventBusFunctionalTest
             ['resource' => __DIR__.'/../autowiring.yml'],
         ];
 
-        $configuration['event_bus']['async_adapter'] = [
-            'adapter' => 'in_memory',
-            'pass_through' => true,
+        $configuration['event_bus'] = [
+            'exchanges' => [
+                'default' => 'events1',
+            ],
+            'async_adapter' => [
+                'adapter' => 'in_memory',
+                'pass_through' => true,
+            ],
         ];
 
         return $configuration;
@@ -52,10 +57,10 @@ class PassthroughEventBusTest extends EventBusFunctionalTest
     {
         $promise = $this
             ->getEventBus()
-            ->dispatch('event1', new Event1('thing'));
+            ->dispatch(new Event1('thing'));
 
         await($promise, $this->getLoop());
 
-        $this->assertEquals('thing', $this->getContextValue('event1'));
+        $this->assertEquals('thing', $this->getContextValue(Event1::class));
     }
 }

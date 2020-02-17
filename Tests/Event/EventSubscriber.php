@@ -15,8 +15,8 @@ declare(strict_types=1);
 
 namespace Drift\EventBus\Tests\Event;
 
-use Drift\EventBus\Event\DomainEventEnvelope;
 use Drift\EventBus\Tests\Context;
+use Drift\HttpKernel\Event\DomainEventEnvelope;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -45,13 +45,13 @@ final class EventSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'event1' => [
+            Event1::class => [
                 ['listenEvent1', 0],
             ],
-            'event2' => [
+            Event2::class => [
                 ['listenEvent2', 0],
             ],
-            'event3' => [
+            Event3::class => [
                 ['listenEvent3', 0],
             ],
         ];
@@ -67,7 +67,7 @@ final class EventSubscriber implements EventSubscriberInterface
         $event = $domainEventEnvelope->getDomainEvent();
         $this
             ->context
-            ->values[$domainEventEnvelope->getEventName()] = $event->getValue();
+            ->values[Event1::class] = $event->getValue();
 
         touch('/tmp/ev1.tmp');
     }
@@ -82,7 +82,7 @@ final class EventSubscriber implements EventSubscriberInterface
         $event = $domainEventEnvelope->getDomainEvent();
         $this
             ->context
-            ->values[$domainEventEnvelope->getEventName()] = $event->getValue();
+            ->values[Event2::class] = $event->getValue();
 
         touch('/tmp/ev2.tmp');
     }
@@ -96,7 +96,7 @@ final class EventSubscriber implements EventSubscriberInterface
     {
         $this
             ->context
-            ->values['event3'] = $symfonyEvent->getValue();
+            ->values[Event3::class] = $symfonyEvent->getValue();
 
         touch('/tmp/ev3.tmp');
     }

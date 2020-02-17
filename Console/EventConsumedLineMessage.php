@@ -32,7 +32,6 @@ final class EventConsumedLineMessage
      */
     const REJECTED = 'Rejected';
 
-    private $eventName;
     private $class;
     private $elapsedTime;
     private $status;
@@ -40,18 +39,15 @@ final class EventConsumedLineMessage
     /**
      * ConsumerMessage constructor.
      *
-     * @param string $eventName
      * @param object $event
      * @param string $elapsedTime
      * @param string $status
      */
     public function __construct(
-        string $eventName,
         $event,
         string $elapsedTime,
         string $status
     ) {
-        $this->eventName = $eventName;
         $this->class = $this->getEventName($event);
         $this->elapsedTime = $elapsedTime;
         $this->status = $status;

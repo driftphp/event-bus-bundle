@@ -57,7 +57,6 @@ class Middleware implements DebugableMiddleware
     /**
      * Handle.
      *
-     * @param string $eventName
      * @parma Object $event
      *
      * @param callable $next
@@ -65,13 +64,12 @@ class Middleware implements DebugableMiddleware
      * @return PromiseInterface
      */
     public function dispatch(
-        string $eventName,
         $event,
         callable $next
     ): PromiseInterface {
         $result = $this
             ->middleware
-            ->{$this->method}($eventName, $event, $next);
+            ->{$this->method}($event, $next);
 
         return ($result instanceof PromiseInterface)
             ? $result

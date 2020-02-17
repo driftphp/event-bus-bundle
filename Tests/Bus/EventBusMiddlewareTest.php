@@ -46,6 +46,9 @@ class AsyncEventBusSimpleTest extends EventBusFunctionalTest
                 Middleware1::class.'::anotherMethod',
                 Middleware2::class,
             ],
+            'exchanges' => [
+                'default' => 'events1',
+            ],
             'async_adapter' => [
                 'adapter' => 'in_memory',
                 'pass_through' => true,
@@ -63,7 +66,7 @@ class AsyncEventBusSimpleTest extends EventBusFunctionalTest
         $this->resetContext();
         $promise = $this
             ->getEventBus()
-            ->dispatch('event1', new Event1('thing'));
+            ->dispatch(new Event1('thing'));
 
         await($promise, $this->getLoop());
 
@@ -92,7 +95,7 @@ class AsyncEventBusSimpleTest extends EventBusFunctionalTest
         $this->resetContext();
         $promise = $this
             ->getInlineEventBus()
-            ->dispatch('event1', new Event1('thing'));
+            ->dispatch(new Event1('thing'));
 
         await($promise, $this->getLoop());
 

@@ -15,7 +15,6 @@ declare(strict_types=1);
 
 namespace Drift\EventBus\Bus;
 
-use Drift\EventBus\Event\DomainEventEnvelope;
 use Drift\EventBus\Exception\InvalidEventException;
 use Drift\EventBus\Middleware\DebugableMiddleware;
 use Drift\HttpKernel\AsyncEventDispatcherInterface;
@@ -93,35 +92,25 @@ class Bus
     /**
      * Dispatch the event.
      *
-     * @param string $eventName
      * @param object $event
      *
      * @return mixed
      *
      * @throws InvalidEventException
      */
-    public function dispatch(
-        string $eventName,
-        $event
-    ) {
+    public function dispatch($event)
+    {
         if (!is_object($event)) {
             throw new InvalidEventException();
         }
 
-        $promise = (($this->middlewareChain)($eventName, $event));
+        $promise = (($this->middlewareChain)($event));
 
         if ($this->dispatchEvent) {
-            $promise = $promise->then(function () use ($eventName, $event) {
-                $dispatcherEvent = $event instanceof Event
-                    ? $event
-                    : new DomainEventEnvelope(
-                        $eventName,
-                        $event
-                    );
-
+            $promise = $promise->then(function () use ($event) {
                 return $this
                     ->eventDispatcher
-                    ->asyncDispatch($eventName, $dispatcherEvent);
+                    ->asyncDispatch($event);
             });
         }
 
@@ -144,8 +133,8 @@ class Bus
         };
 
         while ($middleware = array_pop($middlewareList)) {
-            $lastCallable = function ($eventName, $event) use ($middleware, $lastCallable) {
-                return $middleware->dispatch($eventName, $event, $lastCallable);
+            $lastCallable = function ($event) use ($middleware, $lastCallable) {
+                return $middleware->dispatch($event, $lastCallable);
             };
         }
 
@@ -164,13 +153,12 @@ class Bus
         $lastCallable = function () {};
 
         while ($middleware = array_pop($middlewareList)) {
-            $lastCallable = function ($eventName, $event) use ($middleware, $lastCallable) {
+            $lastCallable = function ($event) use ($middleware, $lastCallable) {
                 $deferred = new Deferred();
                 $this
                     ->loop
-                    ->futureTick(function () use ($deferred, $middleware, $eventName, $event, $lastCallable) {
+                    ->futureTick(function () use ($deferred, $middleware, $event, $lastCallable) {
                         $deferred->resolve($middleware->dispatch(
-                            $eventName,
                             $event,
                             $lastCallable
                         ));

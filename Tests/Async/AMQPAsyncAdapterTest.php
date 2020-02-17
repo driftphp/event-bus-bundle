@@ -67,7 +67,6 @@ class AMQPAsyncAdapterTest extends AsyncAdapterTest
             'adapter' => 'amqp',
             'amqp' => [
                 'client' => 'amqp_1',
-                'exchange' => 'events',
             ],
         ];
     }

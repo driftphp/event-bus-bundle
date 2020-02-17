@@ -17,6 +17,8 @@ namespace Drift\EventBus\Async;
 
 use Drift\Console\OutputPrinter;
 use Drift\EventBus\Bus\Bus;
+use Drift\EventBus\Exception\InvalidExchangeException;
+use Drift\EventBus\Router\Router;
 use Exception;
 use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
@@ -29,7 +31,22 @@ class InMemoryAdapter extends AsyncAdapter
     /**
      * @var array
      */
-    private $queue = [];
+    private $exchanges = [];
+
+    /**
+     * @var Router
+     */
+    private $router;
+
+    /**
+     * InMemoryAdapter constructor.
+     *
+     * @param Router $router
+     */
+    public function __construct(Router $router)
+    {
+        $this->router = $router;
+    }
 
     /**
      * {@inheritdoc}
@@ -40,17 +57,67 @@ class InMemoryAdapter extends AsyncAdapter
     }
 
     /**
-     * {@inheritdoc}
+     * Create infrastructure.
+     *
+     * @param array         $exchanges
+     * @param OutputPrinter $outputPrinter
+     *
+     * @return PromiseInterface
      */
-    public function publish(string $eventName, $event): PromiseInterface
+    public function createInfrastructure(
+        array $exchanges,
+        OutputPrinter $outputPrinter
+    ): PromiseInterface {
+    }
+
+    /**
+     * Drop infrastructure.
+     *
+     * @param array         $exchanges
+     * @param OutputPrinter $outputPrinter
+     *
+     * @return PromiseInterface
+     */
+    public function dropInfrastructure(
+        array $exchanges,
+        OutputPrinter $outputPrinter
+    ): PromiseInterface {
+    }
+
+    /**
+     * Check infrastructure.
+     *
+     * @param array         $exchanges
+     * @param OutputPrinter $outputPrinter
+     *
+     * @return PromiseInterface
+     */
+    public function checkInfrastructure(
+        array $exchanges,
+        OutputPrinter $outputPrinter
+    ): PromiseInterface {
+    }
+
+    /**
+     * Publish.
+     *
+     * @param object $event
+     *
+     * @return PromiseInterface
+     */
+    public function publish($event): PromiseInterface
     {
-        if (!isset($this->queue[$eventName])) {
-            $this->queue[$eventName] = [];
+        $exchangeName = $this
+            ->router
+            ->getExchangeByEvent($event);
+
+        if (!isset($this->queue[$exchangeName])) {
+            $this->exchanges[$exchangeName] = [];
         }
 
         return (new FulfilledPromise())
-            ->then(function () use ($eventName, $event) {
-                $this->queue[$eventName][] = $event;
+            ->then(function () use ($exchangeName, $event) {
+                $this->exchanges[$exchangeName][] = $event;
             });
     }
 
@@ -59,12 +126,15 @@ class InMemoryAdapter extends AsyncAdapter
      *
      * @param Bus           $bus
      * @param OutputPrinter $outputPrinter
-     * @param string        $queueName
+     * @param array         $exchanges
+     *
+     * @throws InvalidExchangeException
+     * @throws Exception
      */
     public function subscribe(
         Bus $bus,
         OutputPrinter $outputPrinter,
-        string $queueName
+        array $exchanges
     ) {
         throw new Exception('Method not usable');
     }
@@ -72,8 +142,8 @@ class InMemoryAdapter extends AsyncAdapter
     /**
      * @return array
      */
-    public function getQueue(): array
+    public function getExchanges(): array
     {
-        return $this->queue;
+        return $this->exchanges;
     }
 }

@@ -58,17 +58,16 @@ class AsyncMiddleware implements DebugableMiddleware
      * @return PromiseInterface
      */
     public function dispatch(
-        string $eventName,
         $event,
         callable $next
     ): PromiseInterface {
         $promise = $this
             ->asyncAdapter
-            ->publish($eventName, $event);
+            ->publish($event);
 
         if ($this->passThrough) {
-            $promise = $promise->then(function () use ($next, $eventName, $event) {
-                return $next($eventName, $event);
+            $promise = $promise->then(function () use ($next, $event) {
+                return $next($event);
             });
         }
 

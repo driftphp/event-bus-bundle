@@ -38,9 +38,14 @@ class EventBusSimpleTest extends EventBusFunctionalTest
             ['resource' => __DIR__.'/../autowiring.yml'],
         ];
 
-        $configuration['event_bus']['distribution'] = self::distributedBus()
-            ? Bus::DISTRIBUTION_NEXT_TICK
-            : Bus::DISTRIBUTION_INLINE;
+        $configuration['event_bus'] = [
+            'exchanges' => [
+                'default' => 'events1',
+            ],
+            'distribution' => self::distributedBus()
+                ? Bus::DISTRIBUTION_NEXT_TICK
+                : Bus::DISTRIBUTION_INLINE,
+        ];
 
         return $configuration;
     }
@@ -62,11 +67,11 @@ class EventBusSimpleTest extends EventBusFunctionalTest
     {
         $promise = $this
             ->getEventBus()
-            ->dispatch('event1', new Event1('thing'));
+            ->dispatch(new Event1('thing'));
 
         await($promise, $this->getLoop());
 
-        $this->assertEquals('thing', $this->getContextValue('event1'));
+        $this->assertEquals('thing', $this->getContextValue(Event1::class));
     }
 
     /**
@@ -76,10 +81,10 @@ class EventBusSimpleTest extends EventBusFunctionalTest
     {
         $promise = $this
             ->getEventBus()
-            ->dispatch('event1', new Event1('thing'));
+            ->dispatch(new Event1('thing'));
 
         await($promise, $this->getLoop());
 
-        $this->assertEquals('thing', $this->getContextValue('event1'));
+        $this->assertEquals('thing', $this->getContextValue(Event1::class));
     }
 }

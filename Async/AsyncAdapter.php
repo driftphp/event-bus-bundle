@@ -19,6 +19,7 @@ use Drift\Console\OutputPrinter;
 use Drift\Console\TimeFormatter;
 use Drift\EventBus\Bus\Bus;
 use Drift\EventBus\Console\EventConsumedLineMessage;
+use Drift\EventBus\Exception\InvalidExchangeException;
 use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
 
@@ -35,29 +36,66 @@ abstract class AsyncAdapter
     abstract public function getName(): string;
 
     /**
+     * Create infrastructure.
+     *
+     * @param array         $exchanges
+     * @param OutputPrinter $outputPrinter
+     *
+     * @return PromiseInterface
+     */
+    abstract public function createInfrastructure(
+        array $exchanges,
+        OutputPrinter $outputPrinter
+    ): PromiseInterface;
+
+    /**
+     * Drop infrastructure.
+     *
+     * @param array         $exchanges
+     * @param OutputPrinter $outputPrinter
+     *
+     * @return PromiseInterface
+     */
+    abstract public function dropInfrastructure(
+        array $exchanges,
+        OutputPrinter $outputPrinter
+    ): PromiseInterface;
+
+    /**
+     * Check infrastructure.
+     *
+     * @param array         $exchanges
+     * @param OutputPrinter $outputPrinter
+     *
+     * @return PromiseInterface
+     */
+    abstract public function checkInfrastructure(
+        array $exchanges,
+        OutputPrinter $outputPrinter
+    ): PromiseInterface;
+
+    /**
      * Publish.
      *
-     * @param string $eventName
      * @param object $event
      *
      * @return PromiseInterface
      */
-    abstract public function publish(
-        string $eventName,
-        $event
-    ): PromiseInterface;
+    abstract public function publish($event): PromiseInterface;
 
     /**
      * Subscribe.
      *
      * @param Bus           $bus
      * @param OutputPrinter $outputPrinter
-     * @param string        $queueName
+     * @param array         $exchanges
+     *
+     * @throws InvalidExchangeException
      */
     abstract public function subscribe(
         Bus $bus,
         OutputPrinter $outputPrinter,
-        string $queueName
+        array $exchanges
     );
 
     /**
@@ -74,7 +112,6 @@ abstract class AsyncAdapter
      */
     protected function dispatchEvent(
         Bus $bus,
-        $eventName,
         $event,
         OutputPrinter $outputPrinter,
 
@@ -84,12 +121,11 @@ abstract class AsyncAdapter
         $from = microtime(true);
 
         return $bus
-            ->dispatch($eventName, $event)
-            ->then(function () use ($from, $outputPrinter, $eventName, $event, $ok) {
+            ->dispatch($event)
+            ->then(function () use ($from, $outputPrinter, $event, $ok) {
                 $to = microtime(true);
 
                 (new EventConsumedLineMessage(
-                    $eventName,
                     $event,
                     TimeFormatter::formatTime($to - $from),
                     EventConsumedLineMessage::CONSUMED
@@ -100,11 +136,10 @@ abstract class AsyncAdapter
                         return $ok();
                     });
             })
-            ->otherwise(function (\Exception $exception) use ($from, $outputPrinter, $eventName, $event, $ok, $ko) {
+            ->otherwise(function (\Exception $exception) use ($from, $outputPrinter, $event, $ok, $ko) {
                 $to = microtime(true);
 
                 (new EventConsumedLineMessage(
-                    $eventName,
                     $event,
                     TimeFormatter::formatTime($to - $from),
                     EventConsumedLineMessage::REJECTED

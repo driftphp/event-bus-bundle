@@ -38,9 +38,14 @@ class AsyncEventBusTest extends EventBusFunctionalTest
             ['resource' => __DIR__.'/../autowiring.yml'],
         ];
 
-        $configuration['event_bus']['async_adapter'] = [
-            'adapter' => 'in_memory',
-            'pass_through' => false,
+        $configuration['event_bus'] = [
+            'exchanges' => [
+                'default' => 'events1',
+            ],
+            'async_adapter' => [
+                'adapter' => 'in_memory',
+                'pass_through' => false,
+            ],
         ];
 
         return $configuration;
@@ -53,11 +58,11 @@ class AsyncEventBusTest extends EventBusFunctionalTest
     {
         $promise = $this
             ->getEventBus()
-            ->dispatch('event1', new Event1('thing'));
+            ->dispatch(new Event1('thing'));
 
         await($promise, $this->getLoop());
 
-        $this->assertNull($this->getContextValue('event1'));
+        $this->assertNull($this->getContextValue(Event1::class));
 
         $this->assertEquals([
             [
@@ -75,11 +80,11 @@ class AsyncEventBusTest extends EventBusFunctionalTest
     {
         $promise = $this
             ->getInlineEventBus()
-            ->dispatch('event1', new Event1('thing'));
+            ->dispatch(new Event1('thing'));
 
         await($promise, $this->getLoop());
 
-        $this->assertNotNull($this->getContextValue('event1'));
+        $this->assertNotNull($this->getContextValue(Event1::class));
 
         $this->assertEquals([], $this->get('drift.inline_event_bus.test')->getMiddlewareList());
         $this->assertEquals(null, $this->getContextValue('middleware'));

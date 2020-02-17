@@ -15,27 +15,22 @@ declare(strict_types=1);
 
 namespace Drift\EventBus\Console;
 
+use Clue\React\Block;
 use Drift\Console\OutputPrinter;
 use Drift\EventBus\Async\AsyncAdapter;
-use Drift\EventBus\Bus\InlineEventBus;
 use React\EventLoop\LoopInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Class EventConsumerCommand.
+ * Class InfrastructureCheckCommand.
  */
-class EventConsumerCommand extends EventBusCommand
+class InfrastructureCheckCommand extends EventBusCommand
 {
     /**
      * @var AsyncAdapter
      */
     private $asyncAdapter;
-
-    /**
-     * @var InlineEventBus
-     */
-    private $eventBus;
 
     /**
      * @var LoopInterface
@@ -45,19 +40,16 @@ class EventConsumerCommand extends EventBusCommand
     /**
      * ConsumeCommand constructor.
      *
-     * @param AsyncAdapter   $asyncAdapter
-     * @param InlineEventBus $eventBus
-     * @param LoopInterface  $loop
+     * @param AsyncAdapter  $asyncAdapter
+     * @param LoopInterface $loop
      */
     public function __construct(
         AsyncAdapter $asyncAdapter,
-        InlineEventBus $eventBus,
         LoopInterface $loop
     ) {
         parent::__construct();
 
         $this->asyncAdapter = $asyncAdapter;
-        $this->eventBus = $eventBus;
         $this->loop = $loop;
     }
 
@@ -68,14 +60,16 @@ class EventConsumerCommand extends EventBusCommand
     {
         parent::configure();
 
-        $this->setDescription('Start consuming asynchronous events from the event bus');
+        $this->setDescription('Checks the infrastructure that makes command bus work');
     }
 
     /**
-     * Consumes events from defined queues. For given exchanges that are not
-     * defined in the queue name, temporary exchanges will be used.
+     * Executes the current command.
      *
-     * consume-events --queue myqueue --queue anotherqueue:exchange1
+     * This method is not abstract because you can use this class
+     * as a concrete class. In this case, instead of defining the
+     * execute() method, you set the code to execute by passing
+     * a Closure to the setCode() method.
      *
      * @return int
      */
@@ -83,17 +77,29 @@ class EventConsumerCommand extends EventBusCommand
     {
         $outputPrinter = new OutputPrinter($output);
         $adapterName = $this->asyncAdapter->getName();
-        (new EventBusHeaderMessage('', 'Consumer built'))->print($outputPrinter);
+        (new EventBusHeaderMessage('', 'Started checking infrastructure...'))->print($outputPrinter);
         (new EventBusHeaderMessage('', 'Using adapter '.$adapterName))->print($outputPrinter);
-        (new EventBusHeaderMessage('', 'Started listening...'))->print($outputPrinter);
 
-        $this
-            ->asyncAdapter
-            ->subscribe(
-                $this->eventBus,
-                $outputPrinter,
-                $this->buildQueueArray($input)
-            );
+        try {
+            $promise = $this
+                ->asyncAdapter
+                ->checkInfrastructure(
+                    $this->buildQueueArray($input),
+                    $outputPrinter
+                )
+                ->then(function () use ($outputPrinter) {
+                    (new EventBusHeaderMessage('', 'Infrastructure checked'))->print($outputPrinter);
+                });
+        } catch (\Throwable $throwable) {
+            (new EventBusLineMessage(sprintf(
+                'Exception thrown. Reason - %s',
+                $throwable->getMessage()
+            )))->print($outputPrinter);
+
+            return 1;
+        }
+
+        Block\await($promise, $this->loop);
 
         return 0;
     }

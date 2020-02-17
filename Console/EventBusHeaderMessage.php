@@ -20,7 +20,7 @@ use Drift\Console\OutputPrinter;
 /**
  * Class ConsumerHeaderMessage.
  */
-final class ConsumerHeaderMessage
+final class EventBusHeaderMessage
 {
     private $elapsedTime;
     private $message;

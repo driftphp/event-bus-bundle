@@ -22,8 +22,12 @@ use Drift\EventBus\Bus\EventBus;
 use Drift\EventBus\Bus\InlineEventBus;
 use Drift\EventBus\Console\DebugEventBusCommand;
 use Drift\EventBus\Console\EventConsumerCommand;
+use Drift\EventBus\Console\InfrastructureCheckCommand;
+use Drift\EventBus\Console\InfrastructureCreateCommand;
+use Drift\EventBus\Console\InfrastructureDropCommand;
 use Drift\EventBus\Middleware\AsyncMiddleware;
 use Drift\EventBus\Middleware\Middleware;
+use Drift\EventBus\Router\Router;
 use Drift\HttpKernel\AsyncEventDispatcherInterface;
 use React\EventLoop\LoopInterface;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -49,6 +53,9 @@ class EventBusCompilerPass implements CompilerPassInterface
 
         if ($asyncBus) {
             $this->createEventConsumer($container);
+            $this->createInfrastructureCreateCommand($container);
+            $this->createInfrastructureDropCommand($container);
+            $this->createInfrastructureCheckCommand($container);
         }
     }
 
@@ -73,6 +80,15 @@ class EventBusCompilerPass implements CompilerPassInterface
         ) {
             return [false, true];
         }
+
+        $container->setDefinition(Router::class,
+            new Definition(
+                Router::class, [
+                    '%bus.event_bus.routes%',
+                    '%bus.event_bus.exchanges%',
+                ]
+            )
+        );
 
         $adapterType = $asyncAdapters['adapter'] ?? array_key_first($asyncAdapters);
         $adapter = $asyncAdapters[$adapterType] ?? null;
@@ -264,6 +280,63 @@ class EventBusCompilerPass implements CompilerPassInterface
     }
 
     /**
+     * Create infrastructure creator.
+     *
+     * @param ContainerBuilder $container
+     */
+    private function createInfrastructureCreateCommand(ContainerBuilder $container)
+    {
+        $consumer = new Definition(InfrastructureCreateCommand::class, [
+            new Reference(AsyncAdapter::class),
+            new Reference('reactphp.event_loop'),
+        ]);
+
+        $consumer->addTag('console.command', [
+            'command' => 'event-bus:infra:create',
+        ]);
+
+        $container->setDefinition(InfrastructureCreateCommand::class, $consumer);
+    }
+
+    /**
+     * Create infrastructure dropper.
+     *
+     * @param ContainerBuilder $container
+     */
+    private function createInfrastructureDropCommand(ContainerBuilder $container)
+    {
+        $consumer = new Definition(InfrastructureDropCommand::class, [
+            new Reference(AsyncAdapter::class),
+            new Reference('reactphp.event_loop'),
+        ]);
+
+        $consumer->addTag('console.command', [
+            'command' => 'event-bus:infra:drop',
+        ]);
+
+        $container->setDefinition(InfrastructureDropCommand::class, $consumer);
+    }
+
+    /**
+     * Create infrastructure checker.
+     *
+     * @param ContainerBuilder $container
+     */
+    private function createInfrastructureCheckCommand(ContainerBuilder $container)
+    {
+        $consumer = new Definition(InfrastructureCheckCommand::class, [
+            new Reference(AsyncAdapter::class),
+            new Reference('reactphp.event_loop'),
+        ]);
+
+        $consumer->addTag('console.command', [
+            'command' => 'event-bus:infra:check',
+        ]);
+
+        $container->setDefinition(InfrastructureCheckCommand::class, $consumer);
+    }
+
+    /**
      * ADAPTERS.
      */
 
@@ -283,7 +356,7 @@ class EventBusCompilerPass implements CompilerPassInterface
             new Definition(AMQPAdapter::class, [
                 new Reference('amqp.'.$adapter['client'].'_channel'),
                 new Reference('reactphp.event_loop'),
-                $adapter['exchange'] ?? 'events',
+                new Reference(Router::class),
             ])
             )->setLazy(true)
         );
@@ -299,7 +372,9 @@ class EventBusCompilerPass implements CompilerPassInterface
         $container->setDefinition(
             AsyncAdapter::class,
             (
-                new Definition(InMemoryAdapter::class)
+                new Definition(InMemoryAdapter::class, [
+                    new Reference(Router::class),
+                ])
             )->setLazy(true)
         );
     }

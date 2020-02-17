@@ -38,15 +38,14 @@ class Middleware3
     }
 
     /**
-     * @param string   $eventName
      * @param object   $event
      * @param callable $next
      *
      * @return mixed
      */
-    public function anotherMethod(string $eventName, $event, callable $next)
+    public function anotherMethod($event, callable $next)
     {
-        return $next($eventName, $event)
+        return $next($event)
             ->then(function () {
                 if (!isset($this->context->values['middleware'])) {
                     $this->context->values['middleware'] = [];
