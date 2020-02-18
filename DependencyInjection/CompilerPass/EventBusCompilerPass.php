@@ -28,6 +28,7 @@ use Drift\EventBus\Console\InfrastructureDropCommand;
 use Drift\EventBus\Middleware\AsyncMiddleware;
 use Drift\EventBus\Middleware\Middleware;
 use Drift\EventBus\Router\Router;
+use Drift\EventBus\Subscriber\EventBusSubscriber;
 use Drift\HttpKernel\AsyncEventDispatcherInterface;
 use React\EventLoop\LoopInterface;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
@@ -52,6 +53,7 @@ class EventBusCompilerPass implements CompilerPassInterface
         $this->createBusDebugger($container);
 
         if ($asyncBus) {
+            $this->createEventBusSubscriber($container);
             $this->createEventConsumer($container);
             $this->createInfrastructureCreateCommand($container);
             $this->createInfrastructureDropCommand($container);
@@ -241,6 +243,22 @@ class EventBusCompilerPass implements CompilerPassInterface
      */
 
     /**
+     * Create event bus subscriber.
+     *
+     * @param ContainerBuilder $container
+     */
+    private function createEventBusSubscriber(ContainerBuilder $container)
+    {
+        $subscriber = new Definition(EventBusSubscriber::class, [
+            new Reference('drift.inline_event_bus'),
+            new Reference(AsyncAdapter::class),
+        ]);
+
+        $subscriber->setPublic(true);
+        $container->setDefinition(EventBusSubscriber::class, $subscriber);
+    }
+
+    /**
      * Create event consumer.
      *
      * @param ContainerBuilder $container
@@ -248,8 +266,7 @@ class EventBusCompilerPass implements CompilerPassInterface
     private function createEventConsumer(ContainerBuilder $container)
     {
         $consumer = new Definition(EventConsumerCommand::class, [
-            new Reference(AsyncAdapter::class),
-            new Reference('drift.inline_event_bus'),
+            new Reference(EventBusSubscriber::class),
             new Reference('reactphp.event_loop'),
         ]);
 
