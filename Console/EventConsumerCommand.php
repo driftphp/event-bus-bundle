@@ -16,8 +16,7 @@ declare(strict_types=1);
 namespace Drift\EventBus\Console;
 
 use Drift\Console\OutputPrinter;
-use Drift\EventBus\Async\AsyncAdapter;
-use Drift\EventBus\Bus\InlineEventBus;
+use Drift\EventBus\Subscriber\EventBusSubscriber;
 use React\EventLoop\LoopInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -28,14 +27,9 @@ use Symfony\Component\Console\Output\OutputInterface;
 class EventConsumerCommand extends EventBusCommand
 {
     /**
-     * @var AsyncAdapter
+     * @var EventBusSubscriber
      */
-    private $asyncAdapter;
-
-    /**
-     * @var InlineEventBus
-     */
-    private $eventBus;
+    private $eventBusSubscriber;
 
     /**
      * @var LoopInterface
@@ -43,21 +37,18 @@ class EventConsumerCommand extends EventBusCommand
     private $loop;
 
     /**
-     * ConsumeCommand constructor.
+     * EventConsumerCommand constructor.
      *
-     * @param AsyncAdapter   $asyncAdapter
-     * @param InlineEventBus $eventBus
-     * @param LoopInterface  $loop
+     * @param EventBusSubscriber $eventBusSubscriber
+     * @param LoopInterface      $loop
      */
     public function __construct(
-        AsyncAdapter $asyncAdapter,
-        InlineEventBus $eventBus,
+        EventBusSubscriber $eventBusSubscriber,
         LoopInterface $loop
     ) {
         parent::__construct();
 
-        $this->asyncAdapter = $asyncAdapter;
-        $this->eventBus = $eventBus;
+        $this->eventBusSubscriber = $eventBusSubscriber;
         $this->loop = $loop;
     }
 
@@ -82,17 +73,16 @@ class EventConsumerCommand extends EventBusCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $outputPrinter = new OutputPrinter($output);
-        $adapterName = $this->asyncAdapter->getName();
+        $adapterName = $this->eventBusSubscriber->getAsyncAdapterName();
         (new EventBusHeaderMessage('', 'Consumer built'))->print($outputPrinter);
         (new EventBusHeaderMessage('', 'Using adapter '.$adapterName))->print($outputPrinter);
         (new EventBusHeaderMessage('', 'Started listening...'))->print($outputPrinter);
 
         $this
-            ->asyncAdapter
-            ->subscribe(
-                $this->eventBus,
-                $outputPrinter,
-                $this->buildQueueArray($input)
+            ->eventBusSubscriber
+            ->subscribeToExchanges(
+                $this->buildQueueArray($input),
+                $outputPrinter
             );
 
         $this
