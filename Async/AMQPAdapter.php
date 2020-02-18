@@ -28,7 +28,6 @@ use Drift\EventBus\Console\EventBusLineMessage;
 use Drift\EventBus\Exception\InvalidExchangeException;
 use Drift\EventBus\Router\Router;
 use function React\Promise\all;
-use React\EventLoop\LoopInterface;
 use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
 
@@ -43,11 +42,6 @@ class AMQPAdapter extends AsyncAdapter
     private $channel;
 
     /**
-     * @var LoopInterface
-     */
-    private $loop;
-
-    /**
      * @var Router
      */
     private $router;
@@ -55,17 +49,14 @@ class AMQPAdapter extends AsyncAdapter
     /**
      * RedisAdapter constructor.
      *
-     * @param Channel       $channel
-     * @param LoopInterface $loop
-     * @param Router        $router
+     * @param Channel $channel
+     * @param Router  $router
      */
     public function __construct(
         Channel $channel,
-        LoopInterface $loop,
         Router $router
     ) {
         $this->channel = $channel;
-        $this->loop = $loop;
         $this->router = $router;
     }
 
@@ -192,7 +183,7 @@ class AMQPAdapter extends AsyncAdapter
                 ->otherwise(function (ClientException $exception) use ($exchangeAlias, $outputPrinter) {
                     (new EventBusLineMessage(sprintf(
                         'Exchange with name %s was impossible to be deleted. Reason - %s',
-                        $exchangeInternal,
+                        $exchangeAlias,
                         $exception->getMessage()
                     )))->print($outputPrinter);
                 });
@@ -294,10 +285,6 @@ class AMQPAdapter extends AsyncAdapter
                 $queue
             );
         }
-
-        $this
-            ->loop
-            ->run();
     }
 
     /**

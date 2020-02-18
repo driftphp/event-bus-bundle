@@ -95,6 +95,10 @@ class EventConsumerCommand extends EventBusCommand
                 $this->buildQueueArray($input)
             );
 
+        $this
+            ->loop
+            ->run();
+
         return 0;
     }
 }

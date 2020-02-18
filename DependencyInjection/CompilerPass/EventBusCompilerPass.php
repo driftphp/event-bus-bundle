@@ -355,7 +355,6 @@ class EventBusCompilerPass implements CompilerPassInterface
             (
             new Definition(AMQPAdapter::class, [
                 new Reference('amqp.'.$adapter['client'].'_channel'),
-                new Reference('reactphp.event_loop'),
                 new Reference(Router::class),
             ])
             )->setLazy(true)
