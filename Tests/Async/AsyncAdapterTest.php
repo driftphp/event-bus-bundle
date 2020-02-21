@@ -49,7 +49,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
             ],
             'router' => [
                 Event1::class => 'events_internal1',
-                Event2::class => 'events_internal1',
+                Event2::class => 'events_internal1, events_internal2',
                 Event3::class => 'events_internal2',
             ],
             'exchanges' => [
@@ -74,7 +74,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
      */
     public function testInfrastructure()
     {
-        $output = $this->dropInfrastructure(['events_internal1:queue1', 'events_internal2']);
+        $output = $this->dropInfrastructure(['events_internal1:queue1', 'events_internal2:queue2']);
         $this->assertContains('events_internal1 deleted properly', $output);
         $this->assertContains('events_internal2 deleted properly', $output);
         $this->assertContains('events_internal2 deleted properly', $output);
@@ -184,7 +184,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
         usleep(500000);
         $output = $process->getOutput();
         $this->assertNotContains("\033[01;32mConsumed\033[0m Event1", $output);
-        $this->assertNotContains("\033[01;32mConsumed\033[0m Event2", $output);
+        $this->assertContains("\033[01;32mConsumed\033[0m Event2", $output);
         $this->assertContains("\033[01;32mConsumed\033[0m Event3", $output);
         $this->assertNotContains("\033[01;32mConsumed\033[0m Event4", $output);
 
@@ -223,7 +223,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
         }
 
         $process = $this->runAsyncCommand($array);
-        usleep(500000);
+        usleep(600000);
 
         return $process->getOutput();
     }

@@ -48,7 +48,7 @@ jobs:
           command: |
             composer update -n --prefer-dist --no-suggest
             rm -Rf var/*
-            php vendor/bin/phpunit --testsuite=base
+            php vendor/bin/phpunit
 
 workflows:
   version: 2
