@@ -20,6 +20,7 @@ use Drift\EventBus\Bus\Bus;
 use Drift\EventBus\Exception\InvalidExchangeException;
 use Drift\EventBus\Router\Router;
 use Exception;
+use function React\Promise\all;
 use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
 
@@ -107,18 +108,23 @@ class InMemoryAdapter extends AsyncAdapter
      */
     public function publish($event): PromiseInterface
     {
-        $exchangeName = $this
+        $exchanges = $this
             ->router
-            ->getExchangeByEvent($event);
+            ->getExchangesByEvent($event);
 
-        if (!isset($this->queue[$exchangeName])) {
-            $this->exchanges[$exchangeName] = [];
+        $promises = [];
+        foreach ($exchanges as $exchange) {
+            if (!isset($this->queue[$exchange])) {
+                $this->exchanges[$exchange] = [];
+            }
+
+            $promises[] = (new FulfilledPromise())
+                ->then(function () use ($exchange, $event) {
+                    $this->exchanges[$exchange][] = $event;
+                });
         }
 
-        return (new FulfilledPromise())
-            ->then(function () use ($exchangeName, $event) {
-                $this->exchanges[$exchangeName][] = $event;
-            });
+        return all($promises);
     }
 
     /**

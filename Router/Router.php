@@ -61,15 +61,15 @@ final class Router
     }
 
     /**
-     * Get exchange name by Event.
+     * Get exchanges name by Event.
      *
      * @param object Event
      *
-     * @return string
+     * @return string[]
      *
      * @throws InvalidExchangeException
      */
-    public function getExchangeByEvent($event): string
+    public function getExchangesByEvent($event): array
     {
         $event = $event instanceof DomainEventEnvelope
             ? $event->getDomainEvent()
@@ -80,8 +80,11 @@ final class Router
         $routes = $this->routes;
 
         $exchangeAlias = $routes[get_class($event)] ?? $routes[$eventLastPart] ?? $this->firstExchange;
+        $exchangeAliases = explode(',', $exchangeAlias);
 
-        return $this->getExchangeByAlias($exchangeAlias);
+        return array_map(function (string $exchangeAlias) {
+            return $this->getExchangeByAlias(trim($exchangeAlias));
+        }, $exchangeAliases);
     }
 
     /**

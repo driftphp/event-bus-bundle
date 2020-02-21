@@ -251,14 +251,20 @@ class AMQPAdapter extends AsyncAdapter
      */
     public function publish($event): PromiseInterface
     {
-        return $this
-            ->channel
-            ->publish(serialize($event), [
-                'delivery_mode' => 2,
-            ], $this
-                ->router
-                ->getExchangeByEvent($event)
-            );
+        $promises = [];
+        $exchanges = $this
+            ->router
+            ->getExchangesByEvent($event);
+
+        foreach ($exchanges as $exchange) {
+            $promises[] = $this
+                ->channel
+                ->publish(serialize($event), [
+                    'delivery_mode' => 2,
+                ], $exchange);
+        }
+
+        return all($promises);
     }
 
     /**

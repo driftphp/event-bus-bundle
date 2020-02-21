@@ -45,13 +45,17 @@ class RouterTest extends TestCase
     {
         $router = new Router([
             Event1::class => 'exchange1',
+            Event3::class => 'exchange1, exchange2',
         ], [
             'exchange1' => 'real_exchange',
+            'exchange2' => 'real_exchange2',
         ]);
         $this->assertEquals('real_exchange', $router->getExchangeByAlias('exchange1'));
-        $this->assertEquals('real_exchange', $router->getExchangeByEvent(new Event1('')));
-        $this->assertEquals('real_exchange', $router->getExchangeByEvent(new Event2('')));
-        $this->assertEquals('real_exchange', $router->getExchangeByEvent(new DomainEventEnvelope(
+        $this->assertEquals('real_exchange2', $router->getExchangeByAlias('exchange2'));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event1('')));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event2('')));
+        $this->assertEquals(['real_exchange', 'real_exchange2'], $router->getExchangesByEvent(new Event3('')));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(
             new Event2('')
         )));
     }
@@ -81,6 +85,6 @@ class RouterTest extends TestCase
         ]);
 
         $this->expectException(InvalidExchangeException::class);
-        $router->getExchangeByEvent(new Event3(''));
+        $router->getExchangesByEvent(new Event3(''));
     }
 }
