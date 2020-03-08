@@ -28,7 +28,7 @@ use Drift\EventBus\Console\EventBusLineMessage;
 use Drift\EventBus\Exception\InvalidExchangeException;
 use Drift\EventBus\Router\Router;
 use function React\Promise\all;
-use React\Promise\FulfilledPromise;
+use function React\Promise\resolve;
 use React\Promise\PromiseInterface;
 
 /**
@@ -308,7 +308,7 @@ class AMQPAdapter extends AsyncAdapter
         string $queueName
     ) {
         $promise = !empty($queueName)
-            ? new FulfilledPromise($queueName)
+            ? resolve($queueName)
             : $this
                 ->channel
                 ->queueDeclare('', false, true, true)

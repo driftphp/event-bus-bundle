@@ -16,7 +16,7 @@ declare(strict_types=1);
 namespace Drift\EventBus\Middleware;
 
 use Drift\CommandBus\Exception\InvalidMiddlewareException;
-use React\Promise\FulfilledPromise;
+use function React\Promise\resolve;
 use React\Promise\PromiseInterface;
 
 /**
@@ -71,9 +71,7 @@ class Middleware implements DebugableMiddleware
             ->middleware
             ->{$this->method}($event, $next);
 
-        return ($result instanceof PromiseInterface)
-            ? $result
-            : new FulfilledPromise($result);
+        return resolve($result);
     }
 
     /**
