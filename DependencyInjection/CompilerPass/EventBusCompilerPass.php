@@ -15,6 +15,7 @@ declare(strict_types=1);
 
 namespace Drift\EventBus\DependencyInjection\CompilerPass;
 
+use Drift\AMQP\DependencyInjection\CompilerPass\AMQPCompilerPass;
 use Drift\EventBus\Async\AMQPAdapter;
 use Drift\EventBus\Async\AsyncAdapter;
 use Drift\EventBus\Async\InMemoryAdapter;
@@ -367,11 +368,14 @@ class EventBusCompilerPass implements CompilerPassInterface
         ContainerBuilder $container,
         array $adapter
     ) {
+        $adapter['preload'] = true;
+        AMQPCompilerPass::registerClient($container, 'event_bus', $adapter);
+
         $container->setDefinition(
             AsyncAdapter::class,
             (
             new Definition(AMQPAdapter::class, [
-                new Reference('amqp.'.$adapter['client'].'_channel'),
+                new Reference('amqp.event_bus_channel'),
                 new Reference(Router::class),
             ])
             )->setLazy(true)
