@@ -20,7 +20,8 @@ use Drift\Console\TimeFormatter;
 use Drift\EventBus\Bus\Bus;
 use Drift\EventBus\Console\EventConsumedLineMessage;
 use Drift\EventBus\Exception\InvalidExchangeException;
-use React\Promise\FulfilledPromise;
+use function React\Promise\reject;
+use function React\Promise\resolve;
 use React\Promise\PromiseInterface;
 
 /**
@@ -131,10 +132,7 @@ abstract class AsyncAdapter
                     EventConsumedLineMessage::CONSUMED
                 ))->print($outputPrinter);
 
-                return (new FulfilledPromise())
-                    ->then(function () use ($ok) {
-                        return $ok();
-                    });
+                return resolve($ok());
             })
             ->otherwise(function (\Exception $exception) use ($from, $outputPrinter, $event, $ok, $ko) {
                 $to = microtime(true);
@@ -145,10 +143,7 @@ abstract class AsyncAdapter
                     EventConsumedLineMessage::REJECTED
                 ))->print($outputPrinter);
 
-                return (new FulfilledPromise())
-                    ->then(function () use ($ko) {
-                        return $ko();
-                    });
+                return reject($ko);
             });
     }
 }

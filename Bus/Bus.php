@@ -18,10 +18,9 @@ namespace Drift\EventBus\Bus;
 use Drift\EventBus\Exception\InvalidEventException;
 use Drift\EventBus\Middleware\DebugableMiddleware;
 use Drift\HttpKernel\AsyncEventDispatcherInterface;
+use function React\Promise\resolve;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
-use React\Promise\FulfilledPromise;
-use Symfony\Contracts\EventDispatcher\Event;
 
 /**
  * Class Bus.
@@ -129,7 +128,7 @@ class Bus
     private function createInlineExecutionChain($middlewareList)
     {
         $lastCallable = function () {
-            return new FulfilledPromise();
+            return resolve();
         };
 
         while ($middleware = array_pop($middlewareList)) {

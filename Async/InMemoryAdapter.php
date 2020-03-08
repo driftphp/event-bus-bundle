@@ -21,7 +21,7 @@ use Drift\EventBus\Exception\InvalidExchangeException;
 use Drift\EventBus\Router\Router;
 use Exception;
 use function React\Promise\all;
-use React\Promise\FulfilledPromise;
+use function React\Promise\resolve;
 use React\Promise\PromiseInterface;
 
 /**
@@ -118,7 +118,7 @@ class InMemoryAdapter extends AsyncAdapter
                 $this->exchanges[$exchange] = [];
             }
 
-            $promises[] = (new FulfilledPromise())
+            $promises[] = resolve()
                 ->then(function () use ($exchange, $event) {
                     $this->exchanges[$exchange][] = $event;
                 });
