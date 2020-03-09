@@ -17,6 +17,7 @@ namespace Drift\EventBus\Console;
 
 use Drift\Console\OutputPrinter;
 use Drift\EventBus\Subscriber\EventBusSubscriber;
+use Drift\EventLoop\EventLoopUtils;
 use React\EventLoop\LoopInterface;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -85,9 +86,9 @@ class EventConsumerCommand extends EventBusCommand
                 $outputPrinter
             );
 
-        $this
-            ->loop
-            ->run();
+        EventLoopUtils::runLoop($this->loop, 2, function ($iterationsMissing) use ($outputPrinter) {
+            (new EventBusHeaderMessage('', 'EventLoop stopped. This consumer will run it '.$iterationsMissing.' more times.'))->print($outputPrinter);
+        });
 
         return 0;
     }
