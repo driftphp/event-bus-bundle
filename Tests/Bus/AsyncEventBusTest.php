@@ -42,9 +42,9 @@ class AsyncEventBusTest extends EventBusFunctionalTest
             'exchanges' => [
                 'default' => 'events1',
             ],
+            'async_pass_through' => false,
             'async_adapter' => [
                 'adapter' => 'in_memory',
-                'pass_through' => false,
             ],
         ];
 

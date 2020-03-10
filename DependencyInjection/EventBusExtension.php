@@ -68,6 +68,7 @@ class EventBusExtension extends BaseExtension
             'bus.event_bus.distribution' => $config['distribution'],
             'bus.event_bus.exchanges' => $config['exchanges'],
             'bus.event_bus.routes' => $config['router'],
+            'bus.event_bus.async_pass_through' => $config['async_pass_through'],
             'bus.event_bus.async_adapter' => $config['async_adapter'] ?? false,
         ];
     }

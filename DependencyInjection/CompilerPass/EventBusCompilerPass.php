@@ -31,6 +31,7 @@ use Drift\EventBus\Middleware\Middleware;
 use Drift\EventBus\Router\Router;
 use Drift\EventBus\Subscriber\EventBusSubscriber;
 use Drift\HttpKernel\AsyncEventDispatcherInterface;
+use Exception;
 use React\EventLoop\LoopInterface;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -104,10 +105,14 @@ class EventBusCompilerPass implements CompilerPassInterface
                 $this->createInMemoryAsyncAdapter($container);
                 break;
             default:
+                if (isset($asyncAdapters['adapter'])) {
+                    throw new Exception('Wrong adapter. Please use one of this list: amqp, in_memory.');
+                }
+
                 return [false, true];
         }
 
-        $passThrough = $asyncAdapters['pass_through'];
+        $passThrough = $container->getParameter('bus.event_bus.async_pass_through');
         $container->setDefinition(AsyncMiddleware::class,
             new Definition(
                 AsyncMiddleware::class, [
