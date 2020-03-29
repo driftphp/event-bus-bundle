@@ -95,6 +95,7 @@ class EventBusCompilerPass implements CompilerPassInterface
         );
 
         $adapterType = $asyncAdapters['adapter'] ?? array_key_first($asyncAdapters);
+        $adapterType = $container->resolveEnvPlaceholders($adapterType, true);
         $adapter = $asyncAdapters[$adapterType] ?? null;
 
         switch ($adapterType) {
