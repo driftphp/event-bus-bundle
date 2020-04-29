@@ -54,6 +54,7 @@ class EventBusSubscriberTest extends EventBusFunctionalTest
      */
     public function testServiceIsPublic()
     {
+        $this->expectNotToPerformAssertions();
         $this->get(EventBusSubscriber::class);
     }
 }

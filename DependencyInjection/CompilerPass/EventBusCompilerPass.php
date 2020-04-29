@@ -41,50 +41,81 @@ use Symfony\Component\DependencyInjection\Reference;
 /**
  * Class EventBusCompilerPass.
  */
-class EventBusCompilerPass implements CompilerPassInterface
+final class EventBusCompilerPass implements CompilerPassInterface
 {
     /**
      * {@inheritdoc}
      */
     public function process(ContainerBuilder $container)
     {
-        list($asyncBus, $passThrough) = $this->createAsyncMiddleware($container);
+        list($isAsync, $passThrough, $asyncAdapter) = self::checkAsyncAdapters(
+            $container,
+            $container->getParameter('bus.event_bus.async_adapter'),
+            $container->getParameter('bus.event_bus.async_pass_through')
+        );
 
-        $this->createEventBus($container, $asyncBus, $passThrough);
-        $this->createInlineEventBus($container);
-        $this->createBusDebugger($container);
+        self::createBuses($container, $isAsync, $passThrough);
 
-        if ($asyncBus) {
-            $this->createEventBusSubscriber($container);
-            $this->createEventConsumer($container);
-            $this->createInfrastructureCreateCommand($container);
-            $this->createInfrastructureDropCommand($container);
-            $this->createInfrastructureCheckCommand($container);
+        if ($isAsync) {
+            self::createAsyncBus($container, $asyncAdapter, $passThrough);
         }
+    }
+
+    /**
+     * Create Buses.
+     *
+     * @param ContainerBuilder $container
+     * @param bool             $asyncBus
+     * @param bool             $passThrough
+     *
+     * @return void
+     */
+    public static function createBuses(
+        ContainerBuilder $container,
+        bool $asyncBus,
+        bool $passThrough
+    ): void {
+        self::createEventBus($container, $asyncBus, $passThrough);
+        self::createInlineEventBus($container);
+        self::createBusDebugger($container);
+    }
+
+    /**
+     * Create Async.
+     *
+     * @param ContainerBuilder $container
+     * @param array            $asyncAdapter
+     * @param bool             $passThrough
+     *
+     * @return void
+     */
+    public static function createAsyncBus(
+        ContainerBuilder $container,
+        array $asyncAdapter,
+        bool $passThrough
+    ): void {
+        self::createAsyncMiddleware($container, $asyncAdapter, $passThrough);
+        self::createEventBusSubscriber($container);
+        self::createEventConsumer($container);
+        self::createInfrastructureCreateCommand($container);
+        self::createInfrastructureDropCommand($container);
+        self::createInfrastructureCheckCommand($container);
     }
 
     /**
      * Check for async middleware needs and return if has been created.
      *
      * @param ContainerBuilder $container
+     * @param array            $asyncAdapter
+     * @param bool             $passThrough
      *
-     * @return array
+     * @return void
      */
-    public function createAsyncMiddleware(ContainerBuilder $container): array
-    {
-        $asyncAdapters = $container->getParameter('bus.event_bus.async_adapter');
-
-        if (
-            empty($asyncAdapters) ||
-            (
-                isset($asyncAdapters['adapter']) &&
-                !'in_memory' === $asyncAdapters['adapter'] &&
-                !isset($asyncAdapters[$asyncAdapters['adapter']])
-            )
-        ) {
-            return [false, true];
-        }
-
+    public static function createAsyncMiddleware(
+        ContainerBuilder $container,
+        array $asyncAdapter,
+        bool $passThrough
+    ): void {
         $container->setDefinition(Router::class,
             new Definition(
                 Router::class, [
@@ -94,26 +125,17 @@ class EventBusCompilerPass implements CompilerPassInterface
             )
         );
 
-        $adapterType = $asyncAdapters['adapter'] ?? array_key_first($asyncAdapters);
-        $adapterType = $container->resolveEnvPlaceholders($adapterType, true);
-        $adapter = $asyncAdapters[$adapterType] ?? null;
+        $adapterType = $asyncAdapter['type'];
 
         switch ($adapterType) {
             case 'amqp':
-                $this->createAMQPAsyncAdapter($container, $adapter);
+                self::createAMQPAsyncAdapter($container, $asyncAdapter);
                 break;
             case 'in_memory':
-                $this->createInMemoryAsyncAdapter($container);
+                self::createInMemoryAsyncAdapter($container);
                 break;
-            default:
-                if (isset($asyncAdapters['adapter'])) {
-                    throw new Exception('Wrong adapter. Please use one of this list: amqp, in_memory.');
-                }
-
-                return [false, true];
         }
 
-        $passThrough = $container->getParameter('bus.event_bus.async_pass_through');
         $container->setDefinition(AsyncMiddleware::class,
             new Definition(
                 AsyncMiddleware::class, [
@@ -122,8 +144,58 @@ class EventBusCompilerPass implements CompilerPassInterface
                 ]
             )
         );
+    }
 
-        return [true, $passThrough];
+    /**
+     * Check asnc configuration.
+     *
+     * Returns an array with
+     *
+     * - isAsync => Async is enabled
+     * - passThrough => Event bus must be passThrough
+     * - adapter => Used adapter if async is enabled
+     *
+     * @param ContainerBuilder $container
+     * @param array            $asyncAdapters
+     * @param bool             $passThrough
+     *
+     * @return array
+     */
+    private static function checkAsyncAdapters(
+        ContainerBuilder $container,
+        array $asyncAdapters,
+        bool $passThrough
+    ): array {
+        if (
+            empty($asyncAdapters) ||
+            (
+                isset($asyncAdapters['adapter']) &&
+                !'in_memory' === $asyncAdapters['adapter'] &&
+                !isset($asyncAdapters[$asyncAdapters['adapter']])
+            )
+        ) {
+            return [false, true, null];
+        }
+
+        $adapterType = $asyncAdapters['adapter'] ?? array_key_first($asyncAdapters);
+        $adapterType = $container->resolveEnvPlaceholders($adapterType, true);
+        $adapter = $asyncAdapters[$adapterType] ?? null;
+
+        switch ($adapterType) {
+            case 'amqp':
+            case 'in_memory':
+                break;
+            default:
+                if (isset($asyncAdapters['adapter'])) {
+                    throw new Exception('Wrong adapter. Please use one of this list: amqp, in_memory.');
+                }
+
+                return [false, true, null];
+        }
+
+        $adapter['type'] = $adapterType;
+
+        return [true, $passThrough, $adapter];
     }
 
     /**
@@ -133,7 +205,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      * @param bool             $asyncBus
      * @param bool             $passThrough
      */
-    private function createEventBus(
+    private static function createEventBus(
         ContainerBuilder $container,
         bool $asyncBus,
         bool $passThrough
@@ -142,7 +214,7 @@ class EventBusCompilerPass implements CompilerPassInterface
             EventBus::class, [
                 new Reference(LoopInterface::class),
                 new Reference(AsyncEventDispatcherInterface::class),
-                $this->createMiddlewaresArray(
+                self::createMiddlewaresArray(
                     $container,
                     $asyncBus,
                     $passThrough
@@ -161,13 +233,13 @@ class EventBusCompilerPass implements CompilerPassInterface
      *
      * @param ContainerBuilder $container
      */
-    private function createInlineEventBus(ContainerBuilder $container)
+    private static function createInlineEventBus(ContainerBuilder $container)
     {
         $container->setDefinition('drift.inline_event_bus', (new Definition(
             InlineEventBus::class, [
                 new Reference(LoopInterface::class),
                 new Reference(AsyncEventDispatcherInterface::class),
-                $this->createMiddlewaresArray(
+                self::createMiddlewaresArray(
                     $container
                 ),
                 $container->getParameter('bus.event_bus.distribution'),
@@ -188,7 +260,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      *
      * @return array
      */
-    private function createMiddlewaresArray(
+    private static function createMiddlewaresArray(
         ContainerBuilder $container,
         bool $isAsync = false,
         bool $passthrough = true
@@ -254,7 +326,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      *
      * @param ContainerBuilder $container
      */
-    private function createEventBusSubscriber(ContainerBuilder $container)
+    private static function createEventBusSubscriber(ContainerBuilder $container)
     {
         $subscriber = new Definition(EventBusSubscriber::class, [
             new Reference('drift.inline_event_bus'),
@@ -270,7 +342,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      *
      * @param ContainerBuilder $container
      */
-    private function createEventConsumer(ContainerBuilder $container)
+    private static function createEventConsumer(ContainerBuilder $container)
     {
         $consumer = new Definition(EventConsumerCommand::class, [
             new Reference(EventBusSubscriber::class),
@@ -289,7 +361,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      *
      * @param ContainerBuilder $container
      */
-    private function createBusDebugger(ContainerBuilder $container)
+    private static function createBusDebugger(ContainerBuilder $container)
     {
         $consumer = new Definition(DebugEventBusCommand::class, [
             new Reference(EventBus::class),
@@ -308,7 +380,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      *
      * @param ContainerBuilder $container
      */
-    private function createInfrastructureCreateCommand(ContainerBuilder $container)
+    private static function createInfrastructureCreateCommand(ContainerBuilder $container)
     {
         $consumer = new Definition(InfrastructureCreateCommand::class, [
             new Reference(AsyncAdapter::class),
@@ -327,7 +399,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      *
      * @param ContainerBuilder $container
      */
-    private function createInfrastructureDropCommand(ContainerBuilder $container)
+    private static function createInfrastructureDropCommand(ContainerBuilder $container)
     {
         $consumer = new Definition(InfrastructureDropCommand::class, [
             new Reference(AsyncAdapter::class),
@@ -346,7 +418,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      *
      * @param ContainerBuilder $container
      */
-    private function createInfrastructureCheckCommand(ContainerBuilder $container)
+    private static function createInfrastructureCheckCommand(ContainerBuilder $container)
     {
         $consumer = new Definition(InfrastructureCheckCommand::class, [
             new Reference(AsyncAdapter::class),
@@ -370,7 +442,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param array            $adapter
      */
-    private function createAMQPAsyncAdapter(
+    private static function createAMQPAsyncAdapter(
         ContainerBuilder $container,
         array $adapter
     ) {
@@ -393,7 +465,7 @@ class EventBusCompilerPass implements CompilerPassInterface
      *
      * @param ContainerBuilder $container
      */
-    private function createInMemoryAsyncAdapter(ContainerBuilder $container)
+    private static function createInMemoryAsyncAdapter(ContainerBuilder $container)
     {
         $container->setDefinition(
             AsyncAdapter::class,
