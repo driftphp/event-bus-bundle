@@ -92,7 +92,7 @@ final class EventBusCompilerPass implements CompilerPassInterface
         array $middlewares
     ): void {
         self::createEventBus($container, $asyncBus, $passThrough, $distribution, $middlewares);
-        self::createInlineEventBus($container, $middlewares);
+        self::createInlineEventBus($container, $distribution, $middlewares);
         self::createBusDebugger($container);
     }
 
@@ -261,10 +261,12 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * Create inline event bus.
      *
      * @param ContainerBuilder $container
+     * @param string $distribution
      * @param array $middlewares
      */
     private static function createInlineEventBus(
         ContainerBuilder $container,
+        string $distribution,
         array $middlewares
     )
     {
@@ -278,7 +280,7 @@ final class EventBusCompilerPass implements CompilerPassInterface
                     true,
                     $middlewares
                 ),
-                $container->getParameter('bus.event_bus.distribution'),
+                $distribution,
                 true,
             ]
         ))->addTag('preload')

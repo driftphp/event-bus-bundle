@@ -149,7 +149,9 @@ class Bus
      */
     private function createNextTickExecutionChain($middlewareList)
     {
-        $lastCallable = function () {};
+        $lastCallable = function () {
+            return resolve();
+        };
 
         while ($middleware = array_pop($middlewareList)) {
             $lastCallable = function ($event) use ($middleware, $lastCallable) {

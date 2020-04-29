@@ -21,9 +21,9 @@ use Drift\EventBus\Tests\EventBusFunctionalTest;
 use function Clue\React\Block\await;
 
 /**
- * Class EventBusSimpleTest.
+ * Class EventBusSimpleNoMiddlewareTest.
  */
-class EventBusSimpleTest extends EventBusFunctionalTest
+class EventBusSimpleNoMiddlewareTest extends EventBusFunctionalTest
 {
     /**
      * Decorate configuration.
@@ -35,7 +35,7 @@ class EventBusSimpleTest extends EventBusFunctionalTest
     protected static function decorateConfiguration(array $configuration): array
     {
         $configuration['imports'] = [
-            ['resource' => __DIR__.'/../autowiring.yml'],
+            ['resource' => __DIR__.'/../autowiring-no-middleware.yml'],
         ];
 
         $configuration['event_bus'] = [
