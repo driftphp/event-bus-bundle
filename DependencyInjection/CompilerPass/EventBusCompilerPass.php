@@ -54,10 +54,22 @@ final class EventBusCompilerPass implements CompilerPassInterface
             $container->getParameter('bus.event_bus.async_pass_through')
         );
 
-        self::createBuses($container, $isAsync, $passThrough);
+        self::createBuses(
+            $container,
+            $isAsync,
+            $passThrough,
+            $container->getParameter('bus.event_bus.distribution'),
+            $container->getParameter('bus.event_bus.middlewares'),
+        );
 
         if ($isAsync) {
-            self::createAsyncBus($container, $asyncAdapter, $passThrough);
+            self::createAsyncBus(
+                $container,
+                $asyncAdapter,
+                $passThrough,
+                $container->getParameter('bus.event_bus.routes'),
+                $container->getParameter('bus.event_bus.exchanges'),
+            );
         }
     }
 
@@ -67,16 +79,20 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param bool             $asyncBus
      * @param bool             $passThrough
+     * @param string $distribution
+     * @param array $middlewares
      *
      * @return void
      */
     public static function createBuses(
         ContainerBuilder $container,
         bool $asyncBus,
-        bool $passThrough
+        bool $passThrough,
+        string $distribution,
+        array $middlewares
     ): void {
-        self::createEventBus($container, $asyncBus, $passThrough);
-        self::createInlineEventBus($container);
+        self::createEventBus($container, $asyncBus, $passThrough, $distribution, $middlewares);
+        self::createInlineEventBus($container, $middlewares);
         self::createBusDebugger($container);
     }
 
@@ -86,15 +102,19 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param array            $asyncAdapter
      * @param bool             $passThrough
+     * @param array $routes
+     * @param array $exchanges
      *
      * @return void
      */
     public static function createAsyncBus(
         ContainerBuilder $container,
         array $asyncAdapter,
-        bool $passThrough
+        bool $passThrough,
+        array $routes,
+        array $exchanges
     ): void {
-        self::createAsyncMiddleware($container, $asyncAdapter, $passThrough);
+        self::createAsyncMiddleware($container, $asyncAdapter, $passThrough, $routes, $exchanges);
         self::createEventBusSubscriber($container);
         self::createEventConsumer($container);
         self::createInfrastructureCreateCommand($container);
@@ -108,19 +128,23 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param array            $asyncAdapter
      * @param bool             $passThrough
+     * @param array $routes
+     * @param array $exchanges
      *
      * @return void
      */
     public static function createAsyncMiddleware(
         ContainerBuilder $container,
         array $asyncAdapter,
-        bool $passThrough
+        bool $passThrough,
+        array $routes,
+        array $exchanges
     ): void {
         $container->setDefinition(Router::class,
             new Definition(
                 Router::class, [
-                    '%bus.event_bus.routes%',
-                    '%bus.event_bus.exchanges%',
+                    $routes,
+                    $exchanges,
                 ]
             )
         );
@@ -204,11 +228,15 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param bool             $asyncBus
      * @param bool             $passThrough
+     * @param string $distribution
+     * @param array $middlewares
      */
     private static function createEventBus(
         ContainerBuilder $container,
         bool $asyncBus,
-        bool $passThrough
+        bool $passThrough,
+        string $distribution,
+        array $middlewares
     ) {
         $container->setDefinition('drift.event_bus', (new Definition(
             EventBus::class, [
@@ -217,9 +245,10 @@ final class EventBusCompilerPass implements CompilerPassInterface
                 self::createMiddlewaresArray(
                     $container,
                     $asyncBus,
-                    $passThrough
+                    $passThrough,
+                    $middlewares
                 ),
-                $container->getParameter('bus.event_bus.distribution'),
+                $distribution,
                 $passThrough,
             ]
         ))->addTag('preload')
@@ -232,15 +261,22 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * Create inline event bus.
      *
      * @param ContainerBuilder $container
+     * @param array $middlewares
      */
-    private static function createInlineEventBus(ContainerBuilder $container)
+    private static function createInlineEventBus(
+        ContainerBuilder $container,
+        array $middlewares
+    )
     {
         $container->setDefinition('drift.inline_event_bus', (new Definition(
             InlineEventBus::class, [
                 new Reference(LoopInterface::class),
                 new Reference(AsyncEventDispatcherInterface::class),
                 self::createMiddlewaresArray(
-                    $container
+                    $container,
+                    false,
+                    true,
+                    $middlewares
                 ),
                 $container->getParameter('bus.event_bus.distribution'),
                 true,
@@ -257,15 +293,16 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $containerr
      * @param bool             $isAsync
      * @param bool             $passthrough
+     * @param array $definedMiddlewares
      *
      * @return array
      */
     private static function createMiddlewaresArray(
         ContainerBuilder $container,
-        bool $isAsync = false,
-        bool $passthrough = true
+        bool $isAsync,
+        bool $passthrough,
+        array $definedMiddlewares
     ) {
-        $definedMiddlewares = $container->getParameter('bus.event_bus.middlewares');
         $asyncFound = array_search('@async', $definedMiddlewares);
         $middlewares = [];
 
