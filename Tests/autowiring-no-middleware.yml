@@ -1,0 +1,10 @@
+services:
+
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: true
+
+  Drift\EventBus\Tests\Event\:
+    resource: 'Event/.'
+    exclude: 'Event/Event{1,2,3}.php'
