@@ -52,13 +52,108 @@ class RouterTest extends TestCase
         ]);
         $this->assertEquals('real_exchange', $router->getExchangeByAlias('exchange1'));
         $this->assertEquals('real_exchange2', $router->getExchangeByAlias('exchange2'));
+
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event1('')));
+        $this->assertEquals([], $router->getExchangesByEvent(new Event2('')));
+        $this->assertEquals(['real_exchange', 'real_exchange2'], $router->getExchangesByEvent(new Event3('')));
+
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event1(''))));
+        $this->assertEquals([], $router->getExchangesByEvent(new DomainEventEnvelope(new Event2(''))));
+        $this->assertEquals(['real_exchange', 'real_exchange2'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event3(''))));
+    }
+
+    /**
+     * Test with matching all.
+     */
+    public function testWithMatchingAll()
+    {
+        $router = new Router([
+            '_all' => 'exchange1',
+            Event1::class => 'exchange1',
+            Event3::class => 'exchange1, exchange2',
+            '_others' => 'exchange2',
+        ], [
+            'exchange1' => 'real_exchange',
+            'exchange2' => 'real_exchange2',
+        ]);
+
         $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event1('')));
         $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event2('')));
-        $this->assertEquals(['real_exchange', 'real_exchange2'], $router->getExchangesByEvent(new Event3('')));
-        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(
-            new Event2('')
-        )));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event3('')));
+
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event1(''))));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event2(''))));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event3(''))));
     }
+
+    /**
+     * Test with matching only all.
+     */
+    public function testWithMatchingOnlyAll()
+    {
+        $router = new Router([
+            '_all' => 'exchange1',
+        ], [
+            'exchange1' => 'real_exchange',
+            'exchange2' => 'real_exchange2',
+        ]);
+
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event1('')));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event2('')));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event3('')));
+
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event1(''))));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event2(''))));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event3(''))));
+    }
+
+    /**
+     * Test with others.
+     */
+    public function testWithMatchingOthers()
+    {
+        $router = new Router([
+            Event1::class => 'exchange1',
+            Event3::class => 'exchange1, exchange2',
+            '_others' => 'exchange2',
+        ], [
+            'exchange1' => 'real_exchange',
+            'exchange2' => 'real_exchange2',
+        ]);
+
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event1('')));
+        $this->assertEquals(['real_exchange2'], $router->getExchangesByEvent(new Event2('')));
+        $this->assertEquals(['real_exchange', 'real_exchange2'], $router->getExchangesByEvent(new Event3('')));
+
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event1(''))));
+        $this->assertEquals(['real_exchange2'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event2(''))));
+        $this->assertEquals(['real_exchange', 'real_exchange2'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event3(''))));
+    }
+
+    /**
+     * Test with only others.
+     */
+    public function testWithMatchingOnlyOthers()
+    {
+        $router = new Router([
+            '_others' => 'exchange1',
+        ], [
+            'exchange1' => 'real_exchange',
+            'exchange2' => 'real_exchange2',
+        ]);
+
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event1('')));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event2('')));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new Event3('')));
+
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event1(''))));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event2(''))));
+        $this->assertEquals(['real_exchange'], $router->getExchangesByEvent(new DomainEventEnvelope(new Event3(''))));
+    }
+
+    /**
+     * Test matching the event name.
+     */
 
     /**
      * Test with router.

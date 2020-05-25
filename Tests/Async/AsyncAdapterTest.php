@@ -51,6 +51,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
                 Event1::class => 'events_internal1',
                 Event2::class => 'events_internal1, events_internal2',
                 Event3::class => 'events_internal2',
+                '_others' => 'events_internal1',
             ],
             'exchanges' => [
                 'events_internal1' => 'events1',
