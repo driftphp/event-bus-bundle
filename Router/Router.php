@@ -35,11 +35,6 @@ final class Router
     private $exchanges;
 
     /**
-     * first exchange.
-     */
-    private $firstExchange;
-
-    /**
      * Router constructor.
      *
      * @param string[] $routes
@@ -57,7 +52,6 @@ final class Router
 
         $this->routes = $routes;
         $this->exchanges = $exchanges;
-        $this->firstExchange = array_key_first($exchanges);
     }
 
     /**
@@ -79,7 +73,17 @@ final class Router
         $eventLastPart = end($eventParts);
         $routes = $this->routes;
 
-        $exchangeAlias = $routes[get_class($event)] ?? $routes[$eventLastPart] ?? $this->firstExchange;
+        $exchangeAlias =
+            $routes['_all'] ??
+            $routes[get_class($event)] ??
+            $routes[$eventLastPart] ??
+            $routes['_others'] ??
+            null;
+
+        if (is_null($exchangeAlias)) {
+            return [];
+        }
+
         $exchangeAliases = explode(',', $exchangeAlias);
 
         return array_map(function (string $exchangeAlias) {

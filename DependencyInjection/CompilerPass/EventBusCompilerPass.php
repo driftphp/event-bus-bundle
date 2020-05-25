@@ -79,8 +79,8 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param bool             $asyncBus
      * @param bool             $passThrough
-     * @param string $distribution
-     * @param array $middlewares
+     * @param string           $distribution
+     * @param array            $middlewares
      *
      * @return void
      */
@@ -102,8 +102,8 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param array            $asyncAdapter
      * @param bool             $passThrough
-     * @param array $routes
-     * @param array $exchanges
+     * @param array            $routes
+     * @param array            $exchanges
      *
      * @return void
      */
@@ -128,8 +128,8 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param array            $asyncAdapter
      * @param bool             $passThrough
-     * @param array $routes
-     * @param array $exchanges
+     * @param array            $routes
+     * @param array            $exchanges
      *
      * @return void
      */
@@ -228,8 +228,8 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $container
      * @param bool             $asyncBus
      * @param bool             $passThrough
-     * @param string $distribution
-     * @param array $middlewares
+     * @param string           $distribution
+     * @param array            $middlewares
      */
     private static function createEventBus(
         ContainerBuilder $container,
@@ -261,15 +261,14 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * Create inline event bus.
      *
      * @param ContainerBuilder $container
-     * @param string $distribution
-     * @param array $middlewares
+     * @param string           $distribution
+     * @param array            $middlewares
      */
     private static function createInlineEventBus(
         ContainerBuilder $container,
         string $distribution,
         array $middlewares
-    )
-    {
+    ) {
         $container->setDefinition('drift.inline_event_bus', (new Definition(
             InlineEventBus::class, [
                 new Reference(LoopInterface::class),
@@ -295,7 +294,7 @@ final class EventBusCompilerPass implements CompilerPassInterface
      * @param ContainerBuilder $containerr
      * @param bool             $isAsync
      * @param bool             $passthrough
-     * @param array $definedMiddlewares
+     * @param array            $definedMiddlewares
      *
      * @return array
      */
