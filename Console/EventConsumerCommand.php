@@ -73,7 +73,7 @@ class EventConsumerCommand extends EventBusCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $outputPrinter = new OutputPrinter($output);
+        $outputPrinter = new OutputPrinter($output, false, false);
         $adapterName = $this->eventBusSubscriber->getAsyncAdapterName();
         (new EventBusHeaderMessage('', 'Consumer built'))->print($outputPrinter);
         (new EventBusHeaderMessage('', 'Using adapter '.$adapterName))->print($outputPrinter);

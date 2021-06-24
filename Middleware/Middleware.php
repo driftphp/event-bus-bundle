@@ -16,8 +16,8 @@ declare(strict_types=1);
 namespace Drift\EventBus\Middleware;
 
 use Drift\CommandBus\Exception\InvalidMiddlewareException;
-use function React\Promise\resolve;
 use React\Promise\PromiseInterface;
+use function React\Promise\resolve;
 
 /**
  * Class Middleware.

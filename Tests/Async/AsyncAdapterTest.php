@@ -15,14 +15,14 @@ declare(strict_types=1);
 
 namespace Drift\EventBus\Tests\Async;
 
+use function Clue\React\Block\await;
+use function Clue\React\Block\awaitAll;
 use Drift\EventBus\Tests\Event\Event1;
 use Drift\EventBus\Tests\Event\Event2;
 use Drift\EventBus\Tests\Event\Event3;
 use Drift\EventBus\Tests\Event\Event4;
 use Drift\EventBus\Tests\EventBusFunctionalTest;
 use Drift\EventBus\Tests\Middleware\Middleware1;
-use function Clue\React\Block\await;
-use function Clue\React\Block\awaitAll;
 use Symfony\Component\Process\Process;
 
 /**
@@ -76,30 +76,30 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
     public function testInfrastructure()
     {
         $output = $this->dropInfrastructure(['events_internal1:queue1', 'events_internal2:queue2']);
-        $this->assertContains('events_internal1 deleted properly', $output);
-        $this->assertContains('events_internal2 deleted properly', $output);
-        $this->assertContains('events_internal2 deleted properly', $output);
+        $this->assertStringContainsString('events_internal1 deleted properly', $output);
+        $this->assertStringContainsString('events_internal2 deleted properly', $output);
+        $this->assertStringContainsString('events_internal2 deleted properly', $output);
 
         $output = $this->createInfrastructure(['events_internal1:queue1', 'events_internal2']);
-        $this->assertContains('events_internal1 created properly', $output);
-        $this->assertContains('queue1 created properly', $output);
-        $this->assertContains('events_internal2 created properly', $output);
+        $this->assertStringContainsString('events_internal1 created properly', $output);
+        $this->assertStringContainsString('queue1 created properly', $output);
+        $this->assertStringContainsString('events_internal2 created properly', $output);
 
         $output = $this->checkInfrastructure(['events_internal1:queue1', 'events_internal2']);
-        $this->assertContains('events_internal1 exists', $output);
-        $this->assertContains('events_internal2 exists', $output);
-        $this->assertContains('queue1 exists', $output);
+        $this->assertStringContainsString('events_internal1 exists', $output);
+        $this->assertStringContainsString('events_internal2 exists', $output);
+        $this->assertStringContainsString('queue1 exists', $output);
 
         $output = $this->checkInfrastructure(['events_internal1:queue2']);
-        $this->assertContains('queue2 does not exist', $output);
+        $this->assertStringContainsString('queue2 does not exist', $output);
 
         $output = $this->checkInfrastructure(['events_internal3']);
-        $this->assertContains('events_internal3 is not configured', $output);
+        $this->assertStringContainsString('events_internal3 is not configured', $output);
 
         $output = $this->dropInfrastructure(['events_internal1:queue1', 'events_internal2:queue4']);
-        $this->assertContains('events_internal1 deleted properly', $output);
-        $this->assertContains('events_internal2 deleted properly', $output);
-        $this->assertContains('events_internal2 deleted properly', $output);
+        $this->assertStringContainsString('events_internal1 deleted properly', $output);
+        $this->assertStringContainsString('events_internal2 deleted properly', $output);
+        $this->assertStringContainsString('events_internal2 deleted properly', $output);
     }
 
     /**
@@ -138,9 +138,9 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
         usleep(500000);
         $output = $process->getOutput();
 
-        $this->assertContains("\033[01;32mConsumed\033[0m Event1", $output);
-        $this->assertContains("\033[01;32mConsumed\033[0m Event2", $output);
-        $this->assertContains("\033[01;32mConsumed\033[0m Event3", $output);
+        $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event1", $output);
+        $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event2", $output);
+        $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event3", $output);
 
         $process->stop();
 
@@ -169,25 +169,25 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
         usleep(500000);
         $output = $process->getOutput();
 
-        $this->assertNotContains("\033[01;32mConsumed\033[0m Event1", $output);
-        $this->assertContains("\033[01;32mConsumed\033[0m Event2", $output);
+        $this->assertStringNotContainsString("\033[01;32mConsumed\033[0m Event1", $output);
+        $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event2", $output);
 
         $process = $this->consumeEvents(['events_internal1:queue1']);
         usleep(500000);
         $output = $process->getOutput();
-        $this->assertContains("\033[01;32mConsumed\033[0m Event1", $output);
-        $this->assertContains("\033[01;32mConsumed\033[0m Event2", $output);
-        $this->assertNotContains("\033[01;32mConsumed\033[0m Event3", $output);
-        $this->assertContains("\033[01;32mConsumed\033[0m Event4", $output);
+        $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event1", $output);
+        $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event2", $output);
+        $this->assertStringNotContainsString("\033[01;32mConsumed\033[0m Event3", $output);
+        $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event4", $output);
         $process->stop();
 
         $process = $this->consumeEvents(['events_internal2:queue2']);
         usleep(500000);
         $output = $process->getOutput();
-        $this->assertNotContains("\033[01;32mConsumed\033[0m Event1", $output);
-        $this->assertContains("\033[01;32mConsumed\033[0m Event2", $output);
-        $this->assertContains("\033[01;32mConsumed\033[0m Event3", $output);
-        $this->assertNotContains("\033[01;32mConsumed\033[0m Event4", $output);
+        $this->assertStringNotContainsString("\033[01;32mConsumed\033[0m Event1", $output);
+        $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event2", $output);
+        $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event3", $output);
+        $this->assertStringNotContainsString("\033[01;32mConsumed\033[0m Event4", $output);
 
         $this->dropInfrastructure(['events_internal1:queue1', 'events_internal2:queue2']);
     }

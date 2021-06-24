@@ -82,7 +82,7 @@ class InfrastructureDropCommand extends EventBusCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $outputPrinter = new OutputPrinter($output);
+        $outputPrinter = new OutputPrinter($output, false, false);
         if (!$input->getOption('force')) {
             (new EventBusHeaderMessage('', 'Please, use the flag --force'))->print($outputPrinter);
 

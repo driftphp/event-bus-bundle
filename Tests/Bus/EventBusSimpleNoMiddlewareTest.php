@@ -15,10 +15,10 @@ declare(strict_types=1);
 
 namespace Drift\EventBus\Tests\Bus;
 
+use function Clue\React\Block\await;
 use Drift\EventBus\Bus\Bus;
 use Drift\EventBus\Tests\Event\Event1;
 use Drift\EventBus\Tests\EventBusFunctionalTest;
-use function Clue\React\Block\await;
 
 /**
  * Class EventBusSimpleNoMiddlewareTest.

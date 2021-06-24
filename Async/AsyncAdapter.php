@@ -20,9 +20,9 @@ use Drift\Console\TimeFormatter;
 use Drift\EventBus\Bus\Bus;
 use Drift\EventBus\Console\EventConsumedLineMessage;
 use Drift\EventBus\Exception\InvalidExchangeException;
+use React\Promise\PromiseInterface;
 use function React\Promise\reject;
 use function React\Promise\resolve;
-use React\Promise\PromiseInterface;
 
 /**
  * Interface AsyncAdapter.

@@ -18,9 +18,9 @@ namespace Drift\EventBus\Bus;
 use Drift\EventBus\Exception\InvalidEventException;
 use Drift\EventBus\Middleware\DebugableMiddleware;
 use Drift\HttpKernel\AsyncEventDispatcherInterface;
-use function React\Promise\resolve;
 use React\EventLoop\LoopInterface;
 use React\Promise\Deferred;
+use function React\Promise\resolve;
 
 /**
  * Class Bus.
