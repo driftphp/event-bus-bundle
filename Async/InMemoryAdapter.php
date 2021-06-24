@@ -21,8 +21,8 @@ use Drift\EventBus\Exception\InvalidExchangeException;
 use Drift\EventBus\Router\Router;
 use Exception;
 use function React\Promise\all;
-use function React\Promise\resolve;
 use React\Promise\PromiseInterface;
+use function React\Promise\resolve;
 
 /**
  * Class DummyAdapter.

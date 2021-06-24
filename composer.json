@@ -12,12 +12,12 @@
   ],
 
   "require": {
-    "php": "^7.3",
+    "php": "^7.4 | ^8.0",
     "symfony/console": "^5.0.0",
     "symfony/dependency-injection": "^5.0.0",
     "symfony/proxy-manager-bridge": "^5.0.0",
 
-    "mmoreram/base-bundle": "^2.1.2",
+    "mmoreram/base-bundle": "^2.3",
     "drift/http-kernel": "0.1.*, >=0.1.7",
     "drift/console-bridge": "0.1.*",
     "drift/event-loop-utils": "0.1.*",
@@ -26,6 +26,7 @@
 
   "require-dev": {
     "drift/amqp-bundle": "0.1.*, >=0.1.2",
+    "phpunit/phpunit": "^9",
     "symfony/process": "^5.0.0"
   },
 
