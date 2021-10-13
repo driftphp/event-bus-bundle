@@ -19,6 +19,7 @@ use Drift\AMQP\DependencyInjection\CompilerPass\AMQPCompilerPass;
 use Drift\EventBus\Async\AMQPAdapter;
 use Drift\EventBus\Async\AsyncAdapter;
 use Drift\EventBus\Async\InMemoryAdapter;
+use Drift\EventBus\Bus\Bus;
 use Drift\EventBus\Bus\EventBus;
 use Drift\EventBus\Bus\InlineEventBus;
 use Drift\EventBus\Console\DebugEventBusCommand;
@@ -255,6 +256,7 @@ final class EventBusCompilerPass implements CompilerPassInterface
         );
 
         $container->setAlias(EventBus::class, 'drift.event_bus');
+        $container->setAlias(Bus::class, 'drift.event_bus');
     }
 
     /**
