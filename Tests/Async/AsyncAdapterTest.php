@@ -115,7 +115,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
         $this->createInfrastructure(['events_internal1:queue1', 'events_internal2:queue2']);
 
         $process = $this->consumeEvents(['events_internal1', 'events_internal2']);
-        usleep(500000);
+        sleep(1);
 
         $promise1 = $this
             ->getEventBus()
@@ -135,7 +135,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
             $promise3,
         ], $this->getLoop());
 
-        usleep(500000);
+        sleep(1);
         $output = $process->getOutput();
 
         $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event1", $output);
@@ -150,9 +150,9 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
 
         await($promise1, $this->getLoop());
 
-        usleep(500000);
+        sleep(1);
         $process = $this->consumeEvents(['events_internal1', 'events_internal2']);
-        usleep(500000);
+        sleep(1);
 
         $promise2 = $this
             ->getEventBus()
@@ -166,14 +166,14 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
             $promise2,
             $promise4,
         ], $this->getLoop());
-        usleep(500000);
+        sleep(1);
         $output = $process->getOutput();
 
         $this->assertStringNotContainsString("\033[01;32mConsumed\033[0m Event1", $output);
         $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event2", $output);
 
         $process = $this->consumeEvents(['events_internal1:queue1']);
-        usleep(500000);
+        sleep(1);
         $output = $process->getOutput();
         $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event1", $output);
         $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event2", $output);
@@ -182,7 +182,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
         $process->stop();
 
         $process = $this->consumeEvents(['events_internal2:queue2']);
-        usleep(500000);
+        sleep(1);
         $output = $process->getOutput();
         $this->assertStringNotContainsString("\033[01;32mConsumed\033[0m Event1", $output);
         $this->assertStringContainsString("\033[01;32mConsumed\033[0m Event2", $output);
@@ -224,7 +224,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
         }
 
         $process = $this->runAsyncCommand($array);
-        usleep(600000);
+        sleep(2);
 
         return $process->getOutput();
     }
@@ -244,7 +244,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
         }
 
         $process = $this->runAsyncCommand($array);
-        usleep(500000);
+        sleep(2);
 
         return $process->getOutput();
     }
@@ -264,7 +264,7 @@ abstract class AsyncAdapterTest extends EventBusFunctionalTest
         }
 
         $process = $this->runAsyncCommand($array);
-        usleep(500000);
+        sleep(2);
 
         return $process->getOutput();
     }
